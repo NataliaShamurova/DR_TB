@@ -9,7 +9,7 @@ from filt.chat_types import ChatTypesFilter, IsAdmin
 from kbrd.reply import get_keyboard
 
 handler_admin_router = Router()
-handler_admin_router.message.filter(ChatTypesFilter(["private"]), IsAdmin())  # Чтобы взаимодействовал только админ
+#handler_admin_router.message.filter(ChatTypesFilter(["private"]), IsAdmin())  # Чтобы взаимодействовал только админ
 
 ADMIN_KB = get_keyboard(
     "Добавить/Изменить баннер",
@@ -20,7 +20,7 @@ ADMIN_KB = get_keyboard(
 
 @handler_admin_router.message(Command("admin"))
 async def admin_features(message: types.Message):
-    await message.answer("Что хотите сделать?", reply_markup=ADMIN_KB)
+    await message.answer("Вы вошли в админ-панель", reply_markup=ADMIN_KB)
 
 
 # FSM для загрузки/изменения баннеров

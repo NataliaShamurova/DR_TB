@@ -1,15 +1,17 @@
-# файл, отвечающий за запросы в/из БД. Изменяем,выбираем,добавляем
+# С„Р°Р№Р», РѕС‚РІРµС‡Р°СЋС‰РёР№ Р·Р° Р·Р°РїСЂРѕСЃС‹ РІ/РёР· Р‘Р”. РР·РјРµРЅСЏРµРј,РІС‹Р±РёСЂР°РµРј,РґРѕР±Р°РІР»СЏРµРј
+from datetime import datetime
+
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Banner, User
 
 
-# Работа с баннерами (информационными страницами)
+# Р Р°Р±РѕС‚Р° СЃ Р±Р°РЅРЅРµСЂР°РјРё (РёРЅС„РѕСЂРјР°С†РёРѕРЅРЅС‹РјРё СЃС‚СЂР°РЅРёС†Р°РјРё)
 
 async def orm_add_banner_description(session: AsyncSession, data: dict):
-    # Добавляем новый или изменяем существующий по именам
-    # пунктов меню: main, about,
+    # Р”РѕР±Р°РІР»СЏРµРј РЅРѕРІС‹Р№ РёР»Рё РёР·РјРµРЅСЏРµРј СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёР№ РїРѕ РёРјРµРЅР°Рј
+    # РїСѓРЅРєС‚РѕРІ РјРµРЅСЋ: main, about,
     query = select(Banner)
     result = await session.execute(query)
     if result.first():
@@ -36,22 +38,36 @@ async def orm_get_info_pages(session: AsyncSession):
     return result.scalars().all()
 
 
-# Добавляем юзера в БД
+# Р”РѕР±Р°РІР»СЏРµРј СЋР·РµСЂР° РІ Р‘Р”
 
 async def orm_add_user(
         session: AsyncSession,
-        user_id: int,
+        #user_id: int,
         name: str | None = None,
         phone: str | None = None,
+        date: datetime | None = None,
+        time: str | None = None,  # Р”РѕР±Р°РІР»РµРЅРѕ РїРѕР»Рµ РІСЂРµРјРµРЅРё
 ):
-    query = select(User).where(User.user_id == user_id)
-    result = await session.execute(query)
-    if result.first() is None:
-        session.add(
-            User(user_id=user_id, name=name, phone=phone)
-        )
-        await session.commit()
+    new_user = User(name=name, phone=phone, date=date, time=time)
+    session.add(new_user)
+    await session.commit()
+    #query = select(User).where(User.user_id == user_id)
+    # result = await session.execute(query)
+    # existing_user = result.scalar()
 
+    # if existing_user is None:
+    #     # РЎРѕР·РґР°РµРј РЅРѕРІРѕРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
+    #     session.add(
+    #         User(user_id=user_id, name=name, phone=phone, date=date, time=time)  # Р”РѕР±Р°РІРёР» time Р·РґРµСЃСЊ
+    #     )
+    # else:
+    #     # РћР±РЅРѕРІР»СЏРµРј С‚РѕР»СЊРєРѕ РїРѕР»СЏ РёРјРµРЅРё, С‚РµР»РµС„РѕРЅР° Рё РґР°С‚Сѓ Р·Р°РїРёСЃРё
+    #     existing_user.name = name
+    #     existing_user.phone = phone
+    #     existing_user.date = date
+    #     existing_user.time = time  # РћР±РЅРѕРІР»СЏРµРј РІСЂРµРјСЏ Р·Р°РїРёСЃРё
+
+    # await session.commit()
 
 
 

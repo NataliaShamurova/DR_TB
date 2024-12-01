@@ -20,25 +20,24 @@ from middlewares.db import DataBaseSession
 # Настройка логгирования
 app_logger = setup_logging("main", "logs/main.log")
 
-# ALLOWED_UPDATES = ['message, edit_message']  # Ограничиваем типы апдейтов, которые приходят к боту
 
 bot = Bot(token=os.getenv('TOKEN'), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-bot.a_admins_list = []  # список администраторов наполняем из user_group
+bot.a_admins_list = ['966573896']  # список администраторов наполняем из user_group
 
 dp = Dispatcher()
 
 dp.include_router(handler_user_router)
-dp.include_router(handler_user_group_router)
+# dp.include_router(handler_user_group_router)
 dp.include_router(handler_admin_router)
 
 
 async def on_startup(bot):
-    # await drop_db() # Убираем старые таблицы, надо заккоментировать
+    #await drop_db() # Убираем старые таблицы, надо заккоментировать
     await create_db()
 
 
 async def on_shutdown(bot):
-    # app_logger.info('Бот остановлен')  # Используем logging для записи информации
+
     print('Бот остановлен')
 
 
@@ -51,7 +50,7 @@ async def main():
 
     # await create_db()
     await bot.delete_webhook(drop_pending_updates=True)
-    # await bot.delete_my_commands(scope=types.BotCommandScopeAllPrivateChats()) #Закомментировать (создан для удаления)
+    #await bot.delete_my_commands(scope=types.BotCommandScopeAllPrivateChats()) #Закомментировать (создан для удаления)
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())  # Подтягиваются автоматом все апдейты
 
 
