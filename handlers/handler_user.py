@@ -168,27 +168,6 @@ def format_phone_number(phone: str) -> str:
 
 #########################################################
 
-# @handler_user_router.message(AddUser.phone)
-# async def process_phone(message: types.Message, state: FSMContext):
-#     '''
-#        Обрабатывает введенную пользователем дату и проверяет ее корректность.
-#        На основе введенной даты получает доступные временные слоты для записи.
-#
-#        :param message: Объект сообщения от пользователя, содержащий введенную датy.
-#        :param state: Состояние машины состояний FSM, хранящее данные пользователя.
-#        :param session: Асинхронная сессия базы данных для выполнения запросов.
-#     '''
-#     phone_number = message.text
-#     formatted_phone = format_phone_number(phone_number)  # Форматируем номер
-#
-#     # Проверяем корректность номера телефона
-#     if formatted_phone == "Неверный номер телефона.":
-#         await message.answer(formatted_phone)  # Если номер неверный, уведомляем пользователя
-#         return
-#
-#     await state.update_data(phone=formatted_phone)  # Сохраняем отформатиротелефона
-#     await message.answer("Пожалуйста, введите желаемую дату в формате 'ДД-ММ-ГГГГ':")
-#     await state.set_state(AddUser.date)
 
 @handler_user_router.message(AddUser.phone)
 async def process_phone(message: types.Message, state: FSMContext):
@@ -224,6 +203,13 @@ async def process_phone(message: types.Message, state: FSMContext):
 
 @handler_user_router.message(AddUser.date)
 async def process_date(message: types.Message, state: FSMContext, session: AsyncSession):
+    """
+       Обрабатывает сообщение с датой, введенной пользователем.
+
+       :param message: Сообщение от пользователя, содержащее дату.
+       :param state: Контекст состояния, используемый для хранения данных состояния FSM.
+       :param session: Асинхронная сессия базы данных для работы с записями.
+       """
     selected_date = message.text
     await state.update_data(selected_date=selected_date)  # Здесь сохраняем текст даты в состоянии
 
@@ -458,6 +444,13 @@ async def add_view(callback: types.CallbackQuery, state: FSMContext):
 #################
 @handler_user_router.message(ViewApp.phone)
 async def process_view_app_phone(message: types.Message, state: FSMContext, session: AsyncSession):
+    """
+      Обрабатывает сообщение с номером телефона, введенным пользователем, и возвращает его активные заявки.
+
+      :param message: Сообщение от пользователя, содержащее номер телефона.
+      :param state: Контекст состояния, используемый для хранения данных состояния FSM.
+      :param session: Асинхронная сессия базы данных для работы с записями.
+      """
     phone_number = message.text
     formatted_phone = format_phone_number(phone_number)
 
@@ -493,6 +486,13 @@ async def process_view_app_phone(message: types.Message, state: FSMContext, sess
 ##########
 @handler_user_router.message(ViewApp.action)
 async def process_action(message: types.Message, state: FSMContext, session: AsyncSession):
+    """
+      Обрабатывает действие пользователя с активными заявками, предлагая изменить, удалить или оставить заявки.
+
+      :param message: Сообщение от пользователя, содержащие действие (изменить, удалить или оставить).
+      :param state: Контекст состояния, используемый для хранения данных состояния FSM.
+      :param session: Асинхронная сессия базы данных для работы с записями.
+      """
     user_data = await state.get_data()
     appointments = user_data.get('appointments', [])
 
@@ -524,6 +524,13 @@ async def process_action(message: types.Message, state: FSMContext, session: Asy
 ###########бработчик для выбора новой даты
 @handler_user_router.message(ViewApp.change_data)
 async def process_change_date(message: types.Message, state: FSMContext, session: AsyncSession):
+    """
+       Обрабатывает изменение даты и времени для выбранной заявки пользователя.
+
+       :param message: Сообщение от пользователя, содержащие номер заявки для изменения.
+       :param state: Контекст состояния, используемый для хранения данных состояния FSM.
+       :param session: Асинхронная сессия базы данных для работы с записями.
+       """
     user_data = await state.get_data()
     appointments = user_data.get('appointments', [])
 
@@ -544,44 +551,16 @@ async def process_change_date(message: types.Message, state: FSMContext, session
     await state.set_state(AddUser.date)  # Переходим к состоянию выбора новой даты
 
 
-###########
-@handler_user_router.message(AddUser.date)
-async def process_date(message: types.Message, state: FSMContext, session: AsyncSession):
-    selected_date = message.text
-    await state.update_data(selected_date=selected_date)
-
-    # Проверка текущей даты и остальная логика
-    now = datetime.now()
-    today = now.date()
-
-    try:
-        selected_date_obj = datetime.strptime(selected_date, "%d-%m-%Y").date()
-
-        if selected_date_obj < today:
-            await message.answer("Пожалуйста, введите корректное число (не ранее сегодняшнего дня).")
-            await state.set_state(AddUser.date)
-            return
-
-    except ValueError:
-        await message.answer("Неверный формат даты. Пожалуйста, используйте формат 'ДД-ММ-ГГГГ'.")
-        await state.set_state(AddUser.date)
-        return
-
-    # Получаем доступные временные слоты
-    free_slots = await get_free_slots(session, selected_date)
-
-    if free_slots:
-        slots_text = "\n".join(f"{i + 1}. {slot}" for i, slot in enumerate(free_slots))
-        await message.answer("Выберите новое время:\n" + slots_text)
-        await state.set_state(ViewApp.change_time)  # Переходим к новому состоянию выбора времени
-    else:
-        await message.answer("К сожалению, на выбранную дату записи нет. Попробуйте другую дату.")
-        await state.set_state(AddUser.date)
-
-
 ############
 @handler_user_router.message(ViewApp.change_time)
 async def process_change_time(message: types.Message, state: FSMContext, session: AsyncSession):
+    """
+       Обрабатывает изменение времени для выбранной заявки пользователя.
+
+       :param message: Сообщение от пользователя, содержащие номер заявки для изменения времени.
+       :param state: Контекст состояния, используемый для хранения данных состояния FSM.
+       :param session: Асинхронная сессия базы данных для работы с записями.
+       """
     user_data = await state.get_data()
     appointments = user_data.get('appointments', [])
 
@@ -616,6 +595,13 @@ async def process_change_time(message: types.Message, state: FSMContext, session
 
 @handler_user_router.message(ViewApp.delete_appointment)
 async def process_delete_appointment(message: types.Message, state: FSMContext, session: AsyncSession):
+    """
+       Обрабатывает удаление выбранной заявки пользователя.
+
+       :param message: Сообщение от пользователя, содержащее номер заявки для удаления.
+       :param state: Контекст состояния, используемый для хранения данных состояния FSM.
+       :param session: Асинхронная сессия базы данных для работы с записями.
+       """
     user_data = await state.get_data()
     appointments = user_data.get('appointments', [])
 
