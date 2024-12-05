@@ -513,12 +513,13 @@ async def process_action(message: types.Message, state: FSMContext, session: Asy
         await state.set_state(ViewApp.delete_appointment)
 
     elif action == "3":  # Оставить
+        await state.clear()
         await send_start_menu(message, session)
 
     else:
         await message.answer(
-            "Некорректный ввод. Пожалуйста, выберите 1 для изменения даты и времени "
-            "или 2 для удаления заявки.")
+            "Некорректный ввод. Пожалуйста, выберите 1 для изменения даты и времени, "
+            "2 для удаления заявки или 3, если заявку не надо менять.")
 
 
 ###########бработчик для выбора новой даты
